@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片转Word工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-2xl mx-auto p-4">
+        <h1 class="text-2xl font-bold text-center my-6">图片文字识别转Word</h1>
+        
+        <!-- 上传区域 -->
+        <div id="upload-area" class="border-2 dashed border-gray-300 p-8 text-center rounded-lg mb-6">
+            <input type="file" id="image-upload" accept="image/*" class="hidden">
+            <i class="fa fa-cloud-upload text-4xl text-blue-500 mb-3"></i>
+            <p>点击或拖拽图片到此处</p>
+            <p class="text-sm text-gray-500">支持JPG、PNG格式</p>
+        </div>
+        
+        <!-- 预览和按钮 -->
+        <div id="preview-area" class="hidden mb-6">
+            <img id="preview" class="max-w-full mx-auto" alt="预览">
+            <button id="process-btn" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded">开始识别</button>
+        </div>
+        
+        <!-- 结果区域 -->
+        <div id="result-area" class="hidden">
+            <h3 class="font-bold mb-2">识别结果</h3>
+            <div id="text-result" class="border p-3 rounded mb-4 min-h-[100px]"></div>
+            <a id="download-link" class="bg-green-500 text-white px-4 py-2 rounded inline-block" href="#">下载Word</a>
+        </div>
+    </div>
+
+    <script>
+        // 元素获取
+        const uploadArea = document.getElementById('upload-area');
+        const imageUpload = document.getElementById('image-upload');
+        const previewArea = document.getElementById('preview-area');
+        const preview = document.getElementById('preview');
+        const processBtn = document.getElementById('process-btn');
+        const resultArea = document.getElementById('result-area');
+        const textResult = document.getElementById('text-result');
+        const downloadLink = document.getElementById('download-link');
+
+        // 上传图片
+        uploadArea.addEventListener('click', () => imageUpload.click());
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    previewArea.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 处理图片（关键：调用后端API）
+        processBtn.addEventListener('click', async () => {
+            const file = imageUpload.files[0];
+            const formData = new FormData();
+            formData.append('image', file);
+
+            // 替换成你的后端地址（本地测试用这个）
+            const response = await fetch('http://localhost:5000/api/process-image', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                textResult.textContent = data.text;
+                downloadLink.href = `http://localhost:5000${data.file_url}`;
+                resultArea.classList.remove('hidden');
+            } else {
+                alert('错误：' + data.error);
+            }
+        });
+    </script>
+</body>
+</html>
